@@ -1,0 +1,4 @@
+disabled = [
+  "manual_inherit_from",
+]
+
