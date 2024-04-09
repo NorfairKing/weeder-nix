@@ -37,6 +37,7 @@ haskell.lib.overrideCabal
     # Turn on building of tests.
     # [ref:DisableTests]
     doCheck = true;
+    doBenchmark = true;
     # Enable outputting hie info.
     # [ref:HieDirectory]
     configureFlags = (old.configureFlags or [ ]) ++ [
