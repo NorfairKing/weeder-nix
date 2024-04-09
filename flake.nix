@@ -11,29 +11,19 @@
       system = "x86_64-linux";
       pkgs = import nixpkgs {
         inherit system;
+        overlays = [
+          (import ./nix/overlay.nix)
+        ];
       };
     in
     with pkgs.lib;
     {
-      lib.${system} =
-        let
-          addHieOutput = pkgs.callPackage ./nix/addHieOutput.nix { };
-          weederCheckScriptFor = pkgs.callPackage ./nix/weederCheckFor.nix {
-            weeder = pkgs.haskellPackages.weeder;
-          };
-          makeWeederCheck = pkgs.callPackage ./nix/makeWeederCheck.nix {
-            inherit addHieOutput
-              weederCheckScriptFor;
-          };
-        in
-        {
-          inherit addHieOutput weederCheckFor makeWeederCheck;
-        };
+      overlays.${system} = import ./nix/overlay.nix;
+      lib.${system} = pkgs.weeder-nix;
       checks.${system} = {
         validity = self.lib.${system}.makeWeederCheck {
           name = "validity";
           reportOnly = true;
-          haskellPackages = pkgs.haskellPackages;
           packages = [
             "validity"
             # "genvalidity"
@@ -42,7 +32,6 @@
         yesod = self.lib.${system}.makeWeederCheck {
           name = "yesod-weeder";
           reportOnly = true;
-          inherit (pkgs) haskellPackages;
           packages = [
             "yesod"
             "yesod-auth"
