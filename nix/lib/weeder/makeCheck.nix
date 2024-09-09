@@ -1,10 +1,7 @@
-{ addHieOutput, weederCheckFor, haskellPackages }:
-let
-  # Funky variable scoping trick to give haskellPackages a default value below.
-  x = haskellPackages;
-in
+{ addHieOutput, checkFor }:
+pkgs:
 args@{ packages
-, haskellPackages ? x
+, haskellPackages ? pkgs.haskellPackages
 , ...
 }:
 let
@@ -12,14 +9,13 @@ let
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;
-        value = addHieOutput super.${pname};
+        value = addHieOutput pkgs super.${pname};
       })
       packages);
 
   newHaskellPackages = haskellPackages.extend addHieOutputOverride;
-  cleanedArgs = builtins.removeAttrs args [ "haskellPackages" ];
   newPackages = builtins.map (pname: newHaskellPackages.${pname}) packages;
 in
-weederCheckFor (cleanedArgs // {
+checkFor pkgs ({ inherit haskellPackages; } // args // {
   packages = newPackages;
 })

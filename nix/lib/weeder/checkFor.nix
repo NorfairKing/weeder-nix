@@ -1,4 +1,4 @@
-{ lib, runCommand, weeder }:
+pkgs:
 {
   # Name of the check derivation
   name ? "weeder-check"
@@ -15,20 +15,21 @@
   reportOnly ? false
 , # Extra arguments for the weeder invocation
   extraArgs ? ""
+, haskellPackages ? pkgs.haskellPackages
 }:
 let
   packageHieDirArg = pkg: "--hie-directory ${pkg.hie}";
   packageHieDirArgs = builtins.map packageHieDirArg packages;
-  args = lib.concatStringsSep " " packageHieDirArgs;
+  args = pkgs.lib.concatStringsSep " " packageHieDirArgs;
   configArg =
     if builtins.isNull weederToml
     then "--write-default-config"
     else "--config ${weederToml}";
-  outArg = lib.optionalString reportOnly "> $out 2>&1";
+  outArg = pkgs.lib.optionalString reportOnly "> $out 2>&1";
 in
-runCommand name { } ''
+pkgs.runCommand name { } ''
   export LC_ALL=C.UTF-8 # Locale issue with rendering the config file
-  ${lib.optionalString reportOnly "set +e"}
-  ${weeder}/bin/weeder ${configArg} ${args} ${extraArgs} ${outArg}
+  ${pkgs.lib.optionalString reportOnly "set +e"}
+  ${haskellPackages.weeder}/bin/weeder ${configArg} ${args} ${extraArgs} ${outArg}
   touch $out # Make sure that the result is definitely created, even if there are no weeds.
 ''

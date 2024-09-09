@@ -9,21 +9,34 @@
   };
 
   outputs = { self, flake-utils, nixpkgs, pre-commit-hooks, systems }:
-    flake-utils.lib.eachSystem (import systems) (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [
-            (import ./nix/overlay.nix)
-          ];
+    let
+      lib = {
+        haskell = import ./nix/lib/haskell;
+        weeder = import ./nix/lib/weeder;
+      };
+
+    in
+    {
+      lib = lib.haskell // lib.weeder;
+
+      overlays.default = final: prev: {
+        haskell = prev.haskell // {
+          lib = prev.haskell.lib
+          // builtins.mapAttrs (_k: v: v final) lib.haskell
+          //
+          {
+            weeder = builtins.mapAttrs (_k: v: v final) lib.weeder;
+          };
         };
+      };
+    }
+    // flake-utils.lib.eachSystem (import systems) (system:
+      let
+        pkgs = import nixpkgs { inherit system; };
       in
-      with pkgs.lib;
       {
-        overlays = import ./nix/overlay.nix;
-        lib = pkgs.weeder-nix;
         checks = {
-          validity = self.lib.${system}.makeWeederCheck {
+          validity = self.lib.makeCheck pkgs {
             name = "validity";
             reportOnly = true;
             packages = [
@@ -31,7 +44,7 @@
               # "genvalidity"
             ];
           };
-          yesod = self.lib.${system}.makeWeederCheck {
+          yesod = self.lib.makeCheck pkgs {
             name = "yesod-weeder";
             reportOnly = true;
             packages = [

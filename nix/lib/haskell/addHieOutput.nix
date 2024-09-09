@@ -1,6 +1,4 @@
-{ haskell
-, rsync
-}:
+pkgs:
 pkg:
 # [tag:DisableTests]
 # In order to prevent false-positives, weeder must get access to the
@@ -10,7 +8,7 @@ pkg:
 # with 'doCheck', but then don't run them, by setting checkPhase to
 # an empty string.
 
-haskell.lib.overrideCabal
+pkgs.haskell.lib.overrideCabal
   (pkg.overrideAttrs (old: {
     outputs = (old.outputs or [ ]) ++ [ "hie" ];
     # Turn off running of tests.
@@ -26,7 +24,7 @@ haskell.lib.overrideCabal
     # depend on a specific nixpkgs.
     postBuild = (old.postBuild or "") + ''
       mkdir -p $hie
-      ${rsync}/bin/rsync -am \
+      ${pkgs.rsync}/bin/rsync -am \
         --include='*/' \
         --include='*.hie' \
         --exclude='*' \
