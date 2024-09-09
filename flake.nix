@@ -5,7 +5,7 @@
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-23.11";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
-    systems.url = "github:nix-systems/default";
+    systems.url = "github:nix-systems/x86_64-linux";
   };
 
   outputs = { self, flake-utils, nixpkgs, pre-commit-hooks, systems }:
