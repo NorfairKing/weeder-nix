@@ -1,7 +1,10 @@
-{ addHieOutput, checkFor }:
-pkgs:
+{ addHieOutput, checkFor, haskellPackages }:
+let
+  # Funky variable scoping trick to give haskellPackages a default value below.
+  x = haskellPackages;
+in
 args@{ packages
-, haskellPackages ? pkgs.haskellPackages
+, haskellPackages ? x
 , ...
 }:
 let
@@ -9,13 +12,13 @@ let
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;
-        value = addHieOutput pkgs super.${pname};
+        value = addHieOutput super.${pname};
       })
       packages);
 
   newHaskellPackages = haskellPackages.extend addHieOutputOverride;
   newPackages = builtins.map (pname: newHaskellPackages.${pname}) packages;
 in
-checkFor pkgs ({ inherit haskellPackages; } // args // {
+checkFor ({ inherit haskellPackages; } // args // {
   packages = newPackages;
 })

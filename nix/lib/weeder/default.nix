@@ -1,8 +1,10 @@
 let
-  addHieOutput = import ../haskell/addHieOutput.nix;
-  checkFor = import ./checkFor.nix;
+  checkFor = pkgs: pkgs.callPackage ./checkFor.nix { };
 in
 {
   inherit checkFor;
-  makeCheck = import ./makeCheck.nix { inherit addHieOutput checkFor; };
+  makeCheck = pkgs: pkgs.callPackage ./makeCheck.nix {
+    addHieOutput = pkgs.callPackage ../haskell/addHieOutput.nix { };
+    checkFor = checkFor pkgs;
+  };
 }

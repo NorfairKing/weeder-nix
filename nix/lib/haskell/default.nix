@@ -1,3 +1,3 @@
 {
-  addHieOutput = import ./addHieOutput.nix;
+  addHieOutput = pkgs: pkgs.callPackage ./addHieOutput.nix { };
 }
