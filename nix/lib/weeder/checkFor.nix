@@ -1,4 +1,8 @@
-{ lib, runCommand, weeder }:
+{ haskellPackages, lib, runCommand }:
+let
+  # Funky variable scoping trick to give haskellPackages a default value below.
+  x = haskellPackages;
+in
 {
   # Name of the check derivation
   name ? "weeder-check"
@@ -15,6 +19,7 @@
   reportOnly ? false
 , # Extra arguments for the weeder invocation
   extraArgs ? ""
+, haskellPackages ? x
 }:
 let
   packageHieDirArg = pkg: "--hie-directory ${pkg.hie}";
@@ -29,6 +34,6 @@ in
 runCommand name { } ''
   export LC_ALL=C.UTF-8 # Locale issue with rendering the config file
   ${lib.optionalString reportOnly "set +e"}
-  ${weeder}/bin/weeder ${configArg} ${args} ${extraArgs} ${outArg}
+  ${haskellPackages.weeder}/bin/weeder ${configArg} ${args} ${extraArgs} ${outArg}
   touch $out # Make sure that the result is definitely created, even if there are no weeds.
 ''
