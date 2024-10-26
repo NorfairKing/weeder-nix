@@ -19,7 +19,7 @@ Make a weeder check
 ``` nix
 {
   outputs = { self, weeder-nix }: {
-    checks.x86-64_linux.dependency-graph = weeder-nix.lib.x86-64_linux.makeWeederCheck {
+    checks.x86-64_linux.dependency-graph = weeder-nix.lib.x86_64-linux.makeWeederCheck {
       haskellPackages = pkgs.haskellPackages;
       packages = [
         "foobar"
