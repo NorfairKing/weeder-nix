@@ -4,24 +4,39 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-23.11";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    systems.url = "github:nix-systems/x86_64-linux";
   };
 
-  outputs = { self, nixpkgs, pre-commit-hooks }:
+  outputs = { self, nixpkgs, pre-commit-hooks, systems }:
     let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = [
-          (import ./nix/overlay.nix)
-        ];
+      forAllSystems = function:
+        nixpkgs.lib.genAttrs (import systems) (system: function nixpkgs.legacyPackages.${system});
+
+      lib = {
+        haskell = import ./nix/lib/haskell;
+        weeder = import ./nix/lib/weeder;
       };
+
+      combinedLib = lib.haskell // lib.weeder;
     in
-    with pkgs.lib;
     {
-      overlays.${system} = import ./nix/overlay.nix;
-      lib.${system} = pkgs.weeder-nix;
-      checks.${system} = {
-        validity = self.lib.${system}.makeWeederCheck {
+      overlays = {
+        default = final: prev: {
+          haskell = prev.haskell // {
+            lib = prev.haskell.lib
+              // builtins.mapAttrs (_k: v: v final) lib.haskell
+              // {
+              weeder = builtins.mapAttrs (_k: v: v final) lib.weeder;
+            };
+          };
+        };
+      } // forAllSystems (_: import ./nix/overlay.nix);
+
+      lib = combinedLib
+        // forAllSystems (pkgs: builtins.mapAttrs (_k: v: v pkgs) combinedLib);
+
+      checks = forAllSystems (pkgs: {
+        validity = self.lib.makeCheck pkgs {
           name = "validity";
           reportOnly = true;
           packages = [
@@ -29,7 +44,7 @@
             # "genvalidity"
           ];
         };
-        yesod = self.lib.${system}.makeWeederCheck {
+        yesod = self.lib.makeCheck pkgs {
           name = "yesod-weeder";
           reportOnly = true;
           packages = [
@@ -49,7 +64,7 @@
             "yesod-websockets"
           ];
         };
-        pre-commit = pre-commit-hooks.lib.${system}.run {
+        pre-commit = pre-commit-hooks.lib.${pkgs.system}.run {
           src = ./.;
           hooks = {
             nixpkgs-fmt.enable = true;
@@ -57,15 +72,20 @@
             tagref.enable = true;
           };
         };
-      };
-      devShells.${system}.default = pkgs.mkShell {
-        name = "weeder-nix-shell";
-        buildInputs = with pre-commit-hooks.packages.${system};          [
-          pkgs.haskellPackages.weeder
-          nixpkgs-fmt
-          statix
-        ];
-        shellHook = self.checks.${system}.pre-commit.shellHook;
-      };
+      });
+
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          name = "weeder-nix-shell";
+          buildInputs = with pre-commit-hooks.packages.${pkgs.system}; [
+            pkgs.haskellPackages.weeder
+            self.formatter.${pkgs.system}
+            statix
+          ];
+          shellHook = self.checks.${pkgs.system}.pre-commit.shellHook;
+        };
+      });
+
+      formatter = forAllSystems (pkgs: pkgs.nixpkgs-fmt);
     };
 }

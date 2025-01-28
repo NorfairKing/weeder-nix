@@ -1,19 +1,13 @@
+# This file is exposed as part of the public API.
 final: _:
 let
-  addHieOutput = final.callPackage ./addHieOutput.nix { };
-  weederCheckFor = final.callPackage ./weederCheckFor.nix {
-    weeder = final.haskellPackages.weeder;
-  };
-  makeWeederCheck = final.callPackage ./makeWeederCheck.nix {
-    inherit addHieOutput
-      weederCheckFor;
-  };
+  weeder = import ./lib/weeder.nix;
 in
 {
-  weeder-nix = {
-    inherit
-      addHieOutput
-      weederCheckFor
-      makeWeederCheck;
-  };
+  weeder-nix =
+    builtins.mapAttrs (_k: v: v final) (import ./lib/haskell.nix)
+    // {
+      weederCheckFor = weeder.checkFor final;
+      makeWeederCheck = weeder.makeCheck final;
+    };
 }
