@@ -2,7 +2,7 @@
   description = "Weeder Nix";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-23.11";
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-24.05";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
