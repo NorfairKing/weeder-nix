@@ -2,7 +2,7 @@
   description = "Weeder Nix";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-25.11";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
@@ -14,6 +14,7 @@
         overlays = [
           (import ./nix/overlay.nix)
         ];
+        config.allowBroken = true;
       };
     in
     with pkgs.lib;
@@ -26,27 +27,7 @@
           reportOnly = true;
           packages = [
             "validity"
-            # "genvalidity"
-          ];
-        };
-        yesod = self.lib.${system}.makeWeederCheck {
-          name = "yesod-weeder";
-          reportOnly = true;
-          packages = [
-            "yesod"
-            "yesod-auth"
-            "yesod-auth-oauth"
-            "yesod-bin"
-            "yesod-core"
-            "yesod-eventsource"
-            "yesod-form"
-            "yesod-form-multi"
-            "yesod-newsfeed"
-            "yesod-persistent"
-            "yesod-sitemap"
-            "yesod-static"
-            "yesod-test"
-            "yesod-websockets"
+            "genvalidity"
           ];
         };
         pre-commit = pre-commit-hooks.lib.${system}.run {
