@@ -2,20 +2,16 @@
 , rsync
 }:
 pkg:
-# [tag:DisableTests]
-# In order to prevent false-positives, weeder must get access to the
-# .hie files of the test suite as well.
-# Cabal doesn't build testing code unless tests are turned on, but we
-# don't actually want to run tests for this build, so we enable tests
-# with 'doCheck', but then don't run them, by setting checkPhase to
-# an empty string.
+# Add a 'hie' output to a haskell package that contains all the .hie files
+# produced during compilation.
 
-haskell.lib.overrideCabal
-  (pkg.overrideAttrs (old: {
-    outputs = (old.outputs or [ ]) ++ [ "hie" ];
-    # Turn off running of tests.
-    # [ref:DisableTests]
-    checkPhase = "";
+(haskell.lib.overrideCabal pkg
+  (old: {
+    # Enable outputting hie info.
+    # [ref:HieDirectory]
+    configureFlags = (old.configureFlags or [ ]) ++ [
+      "--ghc-options=-fwrite-ide-info"
+    ];
     # [tag:HieDirectory]
     # We'd prefer to redirect cabal to outputting the hie output
     # directly into $hie but I could not figure out how to do that
@@ -32,15 +28,6 @@ haskell.lib.overrideCabal
         --exclude='*' \
         . $hie
     '';
-  }))
-  (old: {
-    # Turn on building of tests.
-    # [ref:DisableTests]
-    doCheck = true;
-    doBenchmark = true;
-    # Enable outputting hie info.
-    # [ref:HieDirectory]
-    configureFlags = (old.configureFlags or [ ]) ++ [
-      "--ghc-options=-fwrite-ide-info"
-    ];
-  })
+  })).overrideAttrs (old: {
+  outputs = (old.outputs or [ ]) ++ [ "hie" ];
+})

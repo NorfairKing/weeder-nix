@@ -35,7 +35,7 @@ Make a weeder check
 ### `makeWeederCheck`
 
 Make a weeder check for given Haskell Packages.
-(This does the `addHieOutput` handling for you.)
+(This does the `addHieOutput` and `buildTestsWithoutRunning` handling for you.)
 
 Arguments:
 
@@ -48,7 +48,7 @@ Arguments:
 
 See `./nix/weederCheckFor.nix` for the available arguments.
 
-### `weederCheckScriptFor`
+### `weederCheckFor`
 
 Make a weeder check based on raw packages.
 This assumes you've used something like `addHieOutput`.
@@ -59,6 +59,27 @@ See `./nix/weederCheckFor.nix`.
 ### `addHieOutput`
 
 Add a `.hie` output to a Haskell package.
-You probably don't need to use this.
+This adds `-fwrite-ide-info` and collects the resulting `.hie` files into a separate output.
+You probably don't need to use this directly; `makeWeederCheck` does it for you.
 
 See `./nix/addHieOutput.nix`.
+
+### `buildTestsWithoutRunning`
+
+Build test code without running the test suite.
+
+Cabal doesn't build testing code unless tests are turned on.
+This function enables `doCheck` (so test code is compiled and test dependencies are available)
+but sets `checkPhase` to `""` so the test suite is not executed.
+
+This is useful when you want `.hie` files for test code (for weeder)
+without paying the cost of running the tests.
+
+If you apply `addHieOutput` to your packages yourself (instead of using `makeWeederCheck`),
+you can use this function to compile test code without running it:
+
+```nix
+myPackage = buildTestsWithoutRunning (addHieOutput haskellPackages.myPackage);
+```
+
+See `./nix/buildTestsWithoutRunning.nix`.

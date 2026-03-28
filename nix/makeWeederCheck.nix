@@ -1,4 +1,4 @@
-{ addHieOutput, weederCheckFor, haskellPackages }:
+{ addHieOutput, buildTestsWithoutRunning, weederCheckFor, haskellPackages }:
 let
   # Funky variable scoping trick to give haskellPackages a default value below.
   x = haskellPackages;
@@ -12,7 +12,9 @@ let
     builtins.listToAttrs (builtins.map
       (pname: {
         name = pname;
-        value = addHieOutput super.${pname};
+        # In order to prevent false-positives, weeder must get access to
+        # the .hie files of the test suite as well.
+        value = buildTestsWithoutRunning (addHieOutput super.${pname});
       })
       packages);
 
