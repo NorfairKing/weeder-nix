@@ -83,3 +83,13 @@ myPackage = buildTestsWithoutRunning (addHieOutput haskellPackages.myPackage);
 ```
 
 See `./nix/buildTestsWithoutRunning.nix`.
+
+### `disableOptimisation`
+
+Disable optimisation for a Haskell package.
+
+Weeder only needs `.hie` files, so there is no point spending time on optimisation.
+This function adds `-O0`, `-fignore-interface-pragmas`, and `-fomit-interface-pragmas`.
+`makeWeederCheck` applies this automatically.
+
+See `./nix/disableOptimisation.nix`.

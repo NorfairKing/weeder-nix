@@ -1,4 +1,4 @@
-{ addHieOutput, buildTestsWithoutRunning, weederCheckFor, haskellPackages }:
+{ addHieOutput, buildTestsWithoutRunning, disableOptimisation, weederCheckFor, haskellPackages }:
 let
   # Funky variable scoping trick to give haskellPackages a default value below.
   x = haskellPackages;
@@ -14,7 +14,9 @@ let
         name = pname;
         # In order to prevent false-positives, weeder must get access to
         # the .hie files of the test suite as well.
-        value = buildTestsWithoutRunning (addHieOutput super.${pname});
+        # We disable optimisation because weeder only needs .hie files,
+        # not optimised code.
+        value = disableOptimisation (buildTestsWithoutRunning (addHieOutput super.${pname}));
       })
       packages);
 
