@@ -1,5 +1,7 @@
 # Weeder Nix
 
+[![NixCI](https://staging.nix-ci.com/badge/gh:NorfairKing:weeder-nix)](https://staging.nix-ci.com/gh:NorfairKing:weeder-nix)
+
 Produce a weeder check for a list of Haskell Packages from Nix
 
 ## Quick Start
