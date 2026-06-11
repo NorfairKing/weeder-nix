@@ -37,7 +37,7 @@ Make a weeder check
 ### `makeWeederCheck`
 
 Make a weeder check for given Haskell Packages.
-(This does the `addHieOutput` and `buildTestsWithoutRunning` handling for you.)
+(This does the `addHieOutput` handling for you, and the `buildTestsWithoutRunning` handling when `includeTests` is set.)
 
 Arguments:
 
@@ -47,6 +47,13 @@ Arguments:
 * `haskellPackages`: `haskellPackages` to get those packages from.
 * `reportOnly`: Don't fail if weeds are found, but instead succeed and create a report of the weeds instead.
 * `extraArgs`: Extra command-line arguments for the `weeder` invocation.
+* `includeTests`: Whether to also feed weeder the `.hie` files of test (and benchmark) code. Defaults to `false`.
+
+  When `false` (the default), weeder only sees non-test code, so code that is used _only_ by tests is reported as a weed.
+  When `true`, the test suite's code is compiled (without running it) and its `.hie` files are included as well, so anything the tests use counts as used.
+
+  Note: with `includeTests = false`, the only roots weeder has are the ones in your `weeder.toml` (by default `Main.main` and `Paths_*`).
+  For a library package whose public API is exercised only by its own test suite, you'll want to declare the exposed modules as roots (e.g. with `root-modules`), otherwise excluding the test code makes the whole library look like a weed.
 
 See `./nix/weederCheckFor.nix` for the available arguments.
 
