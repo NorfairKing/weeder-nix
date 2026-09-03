@@ -50,10 +50,26 @@ Arguments:
 * `includeTests`: Whether to also feed weeder the `.hie` files of test (and benchmark) code. Defaults to `false`.
 
   When `false` (the default), weeder only sees non-test code, so code that is used _only_ by tests is reported as a weed.
-  When `true`, the test suite's code is compiled (without running it) and its `.hie` files are included as well, so anything the tests use counts as used.
+  That is the point of the default: with the test suite in the graph, dead code that happens to be well-tested looks alive.
+  When `true`, the test suite's `.hie` files are included as well, so anything the tests use counts as used.
 
   Note: with `includeTests = false`, the only roots weeder has are the ones in your `weeder.toml` (by default `Main.main` and `Paths_*`).
   For a library package whose public API is exercised only by its own test suite, you'll want to declare the exposed modules as roots (e.g. with `root-modules`), otherwise excluding the test code makes the whole library look like a weed.
+
+* `buildTests`: Whether to compile the test (and benchmark) code at all. Defaults to `includeTests`.
+
+  The test artifacts land in a `hieTests` output of their own, so what is built and what weeder is shown are separate questions.
+  Leave this alone unless something else in your repository needs the test code compiled with `-fwrite-ide-info` too.
+  If it does, set `buildTests = true` and leave `includeTests = false`: weeder still sees only non-test code, and the other tool reads the same build instead of compiling everything a second time.
+
+  ```nix
+  weeder-check = weeder-nix.makeWeederCheck {
+    weederToml = ./weeder.toml;
+    packages = [ "foobar" "foobar-gen" ];
+    # The other tool wants the test artifacts; weeder still must not see them.
+    buildTests = true;
+  };
+  ```
 
 See `./nix/weederCheckFor.nix` for the available arguments.
 
@@ -67,8 +83,12 @@ See `./nix/weederCheckFor.nix`.
 
 ### `addHieOutput`
 
-Add a `.hie` output to a Haskell package.
-This adds `-fwrite-ide-info` and collects the resulting `.hie` files into a separate output.
+Add `hie` and `hieTests` outputs to a Haskell package.
+This adds `-fwrite-ide-info` and collects what the compiler wrote down about every module: the `.hie` file for what a module names, and the `.hi` interface for what it declares.
+
+The two outputs are split by the kind of component the artifacts came from, read from the stanzas in the package's `.cabal` file: `hie` holds the library and the executables, `hieTests` holds the test suites and the benchmarks.
+Each output holds one directory per component, because every component with a `main-is` declares a module called `Main`, and each tree is rooted where a module's own path starts, so `A.B.C` is at `A/B/C.hie`.
+
 You probably don't need to use this directly; `makeWeederCheck` does it for you.
 
 See `./nix/addHieOutput.nix`.

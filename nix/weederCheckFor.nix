@@ -7,19 +7,26 @@
   # own.
   weederToml ? null
 , # List of packages to make the check for
-  # These must have a `.hie` output.
-  # You can give them that with the `addHieOutput` function but the
+  # These must have a `hie` output, and a `hieTests` output if includeTests is
+  # set.
+  # You can give them those with the `addHieOutput` function but the
   # `makeWeederCheck` function does that for you.
   packages ? [ ]
+, # Whether to feed weeder the artifacts of test and benchmark code as well.
+  #
+  # A read-time choice: the artifacts are in an output of their own, so this
+  # decides what weeder is shown rather than what was built.
+  includeTests ? false
 , # Only make a report of the weeds, don't fail if there are any weeds.
   reportOnly ? false
 , # Extra arguments for the weeder invocation
   extraArgs ? ""
 }:
 let
-  packageHieDirArg = pkg: "--hie-directory ${pkg.hie}";
-  packageHieDirArgs = builtins.map packageHieDirArg packages;
-  args = lib.concatStringsSep " " packageHieDirArgs;
+  packageHieDirArgs = pkg:
+    [ "--hie-directory ${pkg.hie}" ]
+    ++ lib.optional includeTests "--hie-directory ${pkg.hieTests}";
+  args = lib.concatStringsSep " " (lib.concatMap packageHieDirArgs packages);
   configArg =
     if builtins.isNull weederToml
     then "--write-default-config"
